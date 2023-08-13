@@ -16,7 +16,7 @@ import numpy as np
 st.sidebar.header('Inflazione')
 
 def get_input():
-    selezione = st.sidebar.selectbox('Inflazione tasso', ('2.0', '2.5', '3.0', '4.0', '5.0'))
+    selezione = st.sidebar.selectbox('Inflazione tasso', ('2.0', '2.5', '3.0', '4.0'))
     return selezione
 
 infl = float(get_input())
@@ -27,7 +27,7 @@ st.header(f"""
 
 def request(val):
     req = Request(
-        url='https://it.investing.com/rates-bonds/'+val, 
+        url='https://it.investing.com/rates-bonds/'+val+'-historical-data', 
         headers={'User-Agent': 'Mozilla/5.0'}
     )
     webpage = urlopen(req).read()
