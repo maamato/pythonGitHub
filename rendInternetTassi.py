@@ -34,10 +34,7 @@ def request(val):
     soup=BeautifulSoup(webpage,'html.parser')
 
     price = soup.find('span', {'class': 'text-2xl', 'data-test': 'instrument-price-last'})
-    #element = soup.find('input', attrs={'class': "newInput inputTextBox alertValue"})
-    #print(element)
     valore=price.text
-    #print(element.get('value'))
     return valore
 
 dizionarioPrezzi={}
@@ -45,7 +42,6 @@ dizionario = {'Nov23':'btp-italia-nv23-eur','Apr24':'btp-italia-ap24-eur','Oct24
 for key, value in dizionario.items():
     prezzo=request(value)
     valore = prezzo.replace(",",".")
-    #prezzo=0
     dizionarioPrezzi[key]=float(valore)
 
 
@@ -123,7 +119,7 @@ def nome_mese_italiano(numero_mese):
     else:
         return "Numero mese non valido"
 
-#mese='luglio-2023'
+
 datedataOggi = date.today()+timedelta(days=0)
 todayYear= datedataOggi.year
 todayMonth=datedataOggi.month
@@ -136,7 +132,7 @@ dizionarioFileCI= {'Nov23':'https://www.dt.mef.gov.it/modules/documenti_it/debit
 import pandas as pd
 
 def leggiCI(val):
-    #print(val)
+    
     table_read =pd.read_csv(val, sep=';')
     table_read1 = table_read.iloc[:,1:3]
     table_read1=table_read1.dropna()
@@ -159,7 +155,7 @@ for key, value in dizionarioFileCI.items():
     coeffCI=leggiCI(value)
     dizionarioCI[key]=coeffCI
 
-#print(dizionarioCI)
+
 import math
 def tir_calcolo1(cashFlows, listaDiffDate):
     copialistDiffDate = listaDiffDate.copy()
@@ -320,8 +316,7 @@ tiry = [[tir[i]] for i in range(len(tir))]
 tiryDefl = [[tirDefl[i]] for i in range(len(tirDefl))]
 tiryInfl = [[tirInfl[i]] for i in range(len(tirInfl))]
 tirySR = [[tirSR[i]] for i in range(len(tirSR))]
-#tiry = np.array(tir).reshape(1,-1)
-#print(tiry)
+
 
 def getRegression(x_diffDateCashFlow, y_tir):
     linear_reg = LinearRegression()
@@ -547,7 +542,7 @@ with middle:
     st.write(pdFinale.astype(object))
 
 
-#st.dataframe(pdFinale)
+
 
 st.plotly_chart(fig, use_container_width=True)
 st.plotly_chart(figSR, use_container_width=True)
