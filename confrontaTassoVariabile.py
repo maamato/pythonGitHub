@@ -1,7 +1,6 @@
 import requests
 import json
 import matplotlib.pyplot as plt
-import datetime
 from datetime import datetime
 import re
 import streamlit as st
@@ -18,24 +17,19 @@ def extract_number(text):
         return int(match.group())
     return None
 
+
 titoli_tassoVariabile={"IT0005312142":"Nov23", "IT0005399230":"Cct23", "IT0005174906":"Apr24","IT0005252520":"Cct24", "IT0005217770":"Ott24", "IT0005311508":"Cct25","IT0005410912":"Mag25","IT0005428617":"Cct26", "IT0005332835":"Mag26", "IT0005374043":"Cdp26","IT0005388175":"Ott27","IT0005532723":"Mar28","IT0005534984":"Cct28","IT0005517195":"Nov28","IT0005497000":"Giu30", "IT0005491250":"Cct30"}
+
+# Filtri
 titoli_Cct = {k: v for k, v in titoli_tassoVariabile.items() if v.startswith("Cct")}
-print(titoli_Cct)
 
 titoli_Btp_Ita = {k: v for k, v in titoli_tassoVariabile.items() if not(v.startswith("Cct") or v.startswith("Cdp"))}
-print(titoli_Btp_Ita)
 
 titoli_fino24 = {k: v for k, v in titoli_tassoVariabile.items() if extract_number(v) is not None and 23 <= extract_number(v) <= 24}
-print(titoli_fino24)
 
 titoli_25_26 = {k: v for k, v in titoli_tassoVariabile.items() if extract_number(v) is not None and 25 <= extract_number(v) <= 26}
-print(titoli_25_26)
 
 titoli_oltre27 = {k: v for k, v in titoli_tassoVariabile.items() if extract_number(v) >= 27}
-print(titoli_oltre27)
-
-data_inserita=datetime(2023, 6, 1)
-
 
 st.sidebar.header('Titoli tasso variabile')
 
@@ -48,10 +42,25 @@ def get_data():
     return d
 
 scelta_titoli = get_input()
-data_scelta = get_data()
+data_inserita = get_data()
+
+def applica_filtro(scelta_titoli):
+    if scelta_titoli=="CCT":
+        return titoli_Cct
+    if scelta_titoli=="Btp Ita":
+        return titoli_Btp_Ita
+    if scelta_titoli=="Fino 2024":
+        return titoli_fino24
+    if scelta_titoli=="Da 2025 a 2026":
+        return titoli_25_26
+    if scelta_titoli=="Oltre 2027":
+        return titoli_oltre27
+    return titoli_tassoVariabile
+
+titoli_tassoVariabile=applica_filtro(scelta_titoli)
 
 st.header(f"""
-    Titoli: {scelta_titoli} dal {data_scelta}
+    Titoli: {scelta_titoli} dal {data_inserita}
     """)
 
 # URL del servizio
@@ -112,7 +121,7 @@ for key,val in titoli_tassoVariabile.items():
     lista_variazioni=[]
     for riga in data_list:
         timestamp_seconds = riga[0] / 1000  # Convert to seconds
-        date_time = datetime.fromtimestamp(timestamp_seconds)
+        date_time = datetime.fromtimestamp(timestamp_seconds).date()
         if date_time > data_inserita:
             lista_variazioni.append(riga[-1])
 
@@ -120,15 +129,9 @@ for key,val in titoli_tassoVariabile.items():
     dictionary_variazioni_primo[val] =calcola_variazione_percentuale_primo(lista_variazioni)
 
 
-
-
-
 # Estrai i nomi e i valori dal dizionario
 nomi = list(dictionary_variazioni.keys())
 valori = list(dictionary_variazioni.values())
-
-st.title("Grafico a Dispersione dei Valori")
-st.subheader("Data: " + str(data_inserita.date()))
 
 plt.figure(figsize=(15, 8))
 for nome, valore in zip(nomi, valori):
@@ -138,11 +141,8 @@ for nome, valore in zip(nomi, valori):
 plt.xlabel("Nomi")
 plt.ylabel("Valori")
 
-# Aggiungi una legenda
-#plt.legend()
-
 # Aggiungi un titolo al grafico
-plt.title("Grafico a Dispersione dei Valori")
+plt.title("Dispersione dei Valori")
 
 # Mostra il grafico utilizzando Streamlit
 st.pyplot(plt)
@@ -176,7 +176,7 @@ for i in range(len(nomi)):
 
 plt.xlabel('Valori')
 plt.ylabel('Variazioni')
-plt.title('Variazioni da '+str(data_inserita.date()))
+plt.title('Variazioni da '+str(data_inserita))
 plt.legend()  # Aggiungi legenda
 plt.grid(True)  # Aggiungi griglia
 
