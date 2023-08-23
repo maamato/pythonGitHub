@@ -5,7 +5,7 @@ import datetime
 from datetime import datetime
 import re
 import streamlit as st
-
+import pandas as pd
 
 
 
@@ -51,7 +51,7 @@ scelta_titoli = get_input()
 data_scelta = get_data()
 
 st.header(f"""
-    {scelta_titoli} dal {data_scelta}
+    Titoli: {scelta_titoli} dal {data_scelta}
     """)
 
 # URL del servizio
@@ -127,7 +127,10 @@ for key,val in titoli_tassoVariabile.items():
 nomi = list(dictionary_variazioni.keys())
 valori = list(dictionary_variazioni.values())
 
-# Crea il grafico a dispersione per ogni nome
+st.title("Grafico a Dispersione dei Valori")
+st.subheader("Data: " + str(data_inserita.date()))
+
+plt.figure(figsize=(15, 8))
 for nome, valore in zip(nomi, valori):
     plt.scatter([nome] * len(valore), valore, label=nome)
 
@@ -136,13 +139,18 @@ plt.xlabel("Nomi")
 plt.ylabel("Valori")
 
 # Aggiungi una legenda
-plt.legend()
+#plt.legend()
 
 # Aggiungi un titolo al grafico
-plt.title("Grafico a Dispersione dei Valori dal "+str(data_inserita.date()))
+plt.title("Grafico a Dispersione dei Valori")
 
-# Mostra il grafico
-plt.show()
+# Mostra il grafico utilizzando Streamlit
+st.pyplot(plt)
+
+# Visualizza la tabella dei valori
+#st.subheader("Tabella dei Valori")
+#df = pd.DataFrame(dictionary_variazioni)
+#st.dataframe(df)
 
 def equalize_lists(dictionary):
     # Trova la lunghezza massima delle liste nel dizionario
@@ -162,7 +170,7 @@ valori = list(dictionary_variazioni_primo.values())
 equalize_lists(dictionary_variazioni_primo)
 # Genera un range di valori per l'asse x (0, 1, 2, ...)
 x = range(len(valori[0]))  # Assumendo che tutte le liste abbiano la stessa lunghezza
-
+plt.figure(figsize=(15, 8))
 for i in range(len(nomi)):
     plt.plot(x, valori[i], label=nomi[i])  # Creazione del grafico lineare con marcatori circolari
 
@@ -171,5 +179,9 @@ plt.ylabel('Variazioni')
 plt.title('Variazioni da '+str(data_inserita.date()))
 plt.legend()  # Aggiungi legenda
 plt.grid(True)  # Aggiungi griglia
-plt.show()  # Mostra il grafico
+
+# Mostra il grafico utilizzando Streamlit
+st.pyplot(plt)
+
+
 
