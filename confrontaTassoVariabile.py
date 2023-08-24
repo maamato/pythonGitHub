@@ -164,11 +164,10 @@ def equalize_lists(dictionary):
 for nome, valori in dictionary_variazioni_primo.items():
     valori.insert(0, 0)
 
+equalize_lists(dictionary_variazioni_primo)
 nomi = list(dictionary_variazioni_primo.keys())
 valori = list(dictionary_variazioni_primo.values())
 
-equalize_lists(dictionary_variazioni_primo)
-# Genera un range di valori per l'asse x (0, 1, 2, ...)
 x = range(len(valori[0]))  # Assumendo che tutte le liste abbiano la stessa lunghezza
 plt.figure(figsize=(15, 8))
 for i in range(len(nomi)):
