@@ -27,20 +27,16 @@ def readFromEurostatUrl(url):
     for i in range(len(parsed_data['value'])):
         valori.append(parsed_data['value'][str(i)])
 
-    date=[]
     date_datetime_list=[]
     date_format = "%Y-%m-%d"
 
-    for key,value in (parsed_data['dimension']['time']['category']['label'].items()):
-        date.append((str(key)))
+    for key, values in (parsed_data['dimension']['time']['category']['label'].items()):
         date_datetime = datetime.strptime(str(key), date_format)
         date_datetime_without_seconds = date_datetime.replace(second=0) 
         date_datetime_list.append(date_datetime_without_seconds)
-    
-
-    print(valori) 
-    print(date) 
-    print(date_datetime_list) 
+ 
+    result_dict = dict(zip(date_datetime_list,valori))
+    return result_dict
     
 
 def plot_data(formatted_data1, formatted_data2):
@@ -84,5 +80,6 @@ formatted_data2=readFromUrl(urlEcbRates)
 
 plot_data(formatted_data1, formatted_data2)
 
-readFromEurostatUrl(urlEuroBond)
+formatted_data3=readFromEurostatUrl(urlEuroBond)
+print(formatted_data3)
 #Aggiungere Tasso di inflazione
