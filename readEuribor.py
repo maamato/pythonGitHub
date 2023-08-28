@@ -2,7 +2,6 @@ import json
 import requests
 from datetime import datetime
 import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
 
 urlEuribor6m="https://www.euribor-rates.eu/umbraco/api/euriborpageapi/highchartsdata?series[0]=2"
 urlEcbRates="https://www.euribor-rates.eu/umbraco/api/ecbpageapi/highchartsData?series[0]=1"
@@ -42,6 +41,16 @@ def readFromEurostatUrl(url, hicp):
     result_dict = dict(zip(date_datetime_list,valori))
     return result_dict
     
+def preparazione_scalette(formatted_data, all_dates):
+    scaled_values = []
+    current_value = None
+
+    for date in all_dates:
+        if date in formatted_data:
+            current_value = formatted_data[date]
+        scaled_values.append(current_value)
+    return scaled_values
+
 
 def plot_data(formatted_data1, formatted_data2, formatted_data3, formatted_data4):
     plt.figure(figsize=(10, 6))
@@ -49,39 +58,45 @@ def plot_data(formatted_data1, formatted_data2, formatted_data3, formatted_data4
     #Considero tutte le date dei due set di valori e le ordino
     all_dates = set(formatted_data1.keys()).union((formatted_data2.keys()),(formatted_data3.keys()), formatted_data4.keys())
     all_dates = sorted(all_dates)
-   
+     
     values3 = [formatted_data3.get(date, None) for date in all_dates]
-    values1 = [formatted_data1.get(date, None) for date in all_dates]
-
+    #values1 = [formatted_data1.get(date, None) for date in all_dates]
+    values1=preparazione_scalette(formatted_data1,all_dates)
     #Creao un grafico a scaletta i valori precedenti a x valgono x-1 anche per
     #i giorni in cun non è definito alcun valore
-    scaled_values2 = []
-    current_value = None
+    scaled_values2=preparazione_scalette(formatted_data2,all_dates)
 
-    for date in all_dates:
-        if date in formatted_data2:
-            current_value = formatted_data2[date]
-        scaled_values2.append(current_value)
-
-    scaled_values4 = []
-    current_value = None
-
-    for date in all_dates:
-        if date in formatted_data4:
-            current_value = formatted_data4[date]
-        scaled_values4.append(current_value)
+    scaled_values4=preparazione_scalette(formatted_data4,all_dates)
     
     # Traccia il grafico per il secondo dizionario
     plt.step(all_dates, scaled_values2, where='post', color='orange', label='Tassi ECB')
-    plt.step(all_dates, values3, where='post', color='grey', label='Euro Bond 10Y')
+    plt.step(all_dates, values3, where='post', color='green', label='Euro Bond 10Y')
     plt.step(all_dates, values1, where='post', color='blue',label='Euribor 3mesi')
     plt.step(all_dates, scaled_values4, where='post', color='red', label='HICP')
-    #plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+    
+    # Trucco per vedere le date sull'asse delle X suggerito da ChatGBT
     # Configurazione delle etichette dell'asse delle x
+    current_labels = plt.xticks()[0]
+    # Specificare il valore minimo e massimo
+    min_value = current_labels[1] 
+    max_value = current_labels[-2]
+
+    # Clip per mantenere le etichette all'interno del range minimo e massimo
+    clipped_labels = [max(min_value, min(max_value, label)) for label in current_labels]
+
+    # Converti le etichette da millisecondi a oggetti datetime
+    date_labels = [datetime.fromtimestamp(int(label) // 1000) for label in clipped_labels]
+
+    # Converti gli oggetti datetime in stringhe "YYYY-MM-DD"
+    formatted_date_labels = [dt.strftime('%Y-%m') for dt in date_labels]
+
+    # Imposta le nuove etichette sull'asse x
+    plt.xticks(clipped_labels, formatted_date_labels)
+
     plt.xticks(rotation=45)
-    plt.xlabel('Date')
-    plt.ylabel('Values')
-    plt.title('Graph of Values Over Dates')
+    plt.xlabel('Data')
+    plt.ylabel('Valori')
+    plt.title('Inflazione e Tassi')
     plt.legend()
     plt.tight_layout()
 
