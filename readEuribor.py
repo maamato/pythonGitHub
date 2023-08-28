@@ -2,6 +2,7 @@ import json
 import requests
 from datetime import datetime
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 
 urlEuribor6m="https://www.euribor-rates.eu/umbraco/api/euriborpageapi/highchartsdata?series[0]=2"
 urlEcbRates="https://www.euribor-rates.eu/umbraco/api/ecbpageapi/highchartsData?series[0]=1"
@@ -46,8 +47,7 @@ def plot_data(formatted_data1, formatted_data2, formatted_data3, formatted_data4
     plt.figure(figsize=(10, 6))
 
     #Considero tutte le date dei due set di valori e le ordino
-    #(le date dell'inflazione formatted_data4 dovrebbero essere contenute)
-    all_dates = set(formatted_data1.keys()).union((formatted_data2.keys()),(formatted_data3.keys()))
+    all_dates = set(formatted_data1.keys()).union((formatted_data2.keys()),(formatted_data3.keys()), formatted_data4.keys())
     all_dates = sorted(all_dates)
    
     values3 = [formatted_data3.get(date, None) for date in all_dates]
@@ -76,9 +76,9 @@ def plot_data(formatted_data1, formatted_data2, formatted_data3, formatted_data4
     plt.step(all_dates, values3, where='post', color='grey', label='Euro Bond 10Y')
     plt.step(all_dates, values1, where='post', color='blue',label='Euribor 3mesi')
     plt.step(all_dates, scaled_values4, where='post', color='red', label='HICP')
+    #plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
     # Configurazione delle etichette dell'asse delle x
     plt.xticks(rotation=45)
-    
     plt.xlabel('Date')
     plt.ylabel('Values')
     plt.title('Graph of Values Over Dates')
