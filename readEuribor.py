@@ -52,28 +52,40 @@ def preparazione_scalette(formatted_data, all_dates):
     return scaled_values
 
 
-def plot_data(formatted_data1, formatted_data2, formatted_data3, formatted_data4):
+def calcola_reale(tassi, inflazione):
+    lunghezza_minima = min(len(tassi), len(inflazione))
+    risultato = []
+
+    for i in range(lunghezza_minima):
+        valore1 = tassi[i]
+        valore2 = inflazione[i]
+
+        if valore1 is not None:
+            differenza = valore1 - valore2
+            risultato.append(differenza)
+        else:
+            risultato.append(None)
+    return risultato
+ 
+def plot_data(formatted_euribor, formatted_ecbrates, formatted_yield, formatted_inflazione):
     plt.figure(figsize=(10, 6))
 
     #Considero tutte le date dei due set di valori e le ordino
-    all_dates = set(formatted_data1.keys()).union((formatted_data2.keys()),(formatted_data3.keys()), formatted_data4.keys())
+    all_dates = set(formatted_euribor.keys()).union((formatted_ecbrates.keys()),(formatted_yield.keys()), formatted_inflazione.keys())
     all_dates = sorted(all_dates)
      
-    values3 = [formatted_data3.get(date, None) for date in all_dates]
-    #values1 = [formatted_data1.get(date, None) for date in all_dates]
-    values1=preparazione_scalette(formatted_data1,all_dates)
-    #Creao un grafico a scaletta i valori precedenti a x valgono x-1 anche per
-    #i giorni in cun non è definito alcun valore
-    scaled_values2=preparazione_scalette(formatted_data2,all_dates)
-
-    scaled_values4=preparazione_scalette(formatted_data4,all_dates)
+    euribor=preparazione_scalette(formatted_euribor,all_dates)
+    ecbrates=preparazione_scalette(formatted_ecbrates,all_dates)
+    yield10y=preparazione_scalette(formatted_yield,all_dates)
+    inflazione=preparazione_scalette(formatted_inflazione,all_dates)
     
+    values_reale=calcola_reale(yield10y, inflazione)
     # Traccia il grafico per il secondo dizionario
-    plt.step(all_dates, scaled_values2, where='post', color='orange', label='Tassi ECB')
-    plt.step(all_dates, values3, where='post', color='green', label='Euro Bond 10Y')
-    plt.step(all_dates, values1, where='post', color='blue',label='Euribor 3mesi')
-    plt.step(all_dates, scaled_values4, where='post', color='red', label='HICP')
-    
+    plt.step(all_dates, ecbrates, where='post', color='orange', label='Tassi ECB')
+    plt.step(all_dates, yield10y, where='post', color='green', label='Euro Bond 10Y')
+    plt.step(all_dates, euribor, where='post', color='blue',label='Euribor 3mesi')
+    plt.step(all_dates, inflazione, where='post', color='red', label='HICP')
+    plt.step(all_dates, values_reale, where='post', color='black', label='Tasso Reale')
     # Trucco per vedere le date sull'asse delle X suggerito da ChatGBT
     # Configurazione delle etichette dell'asse delle x
     current_labels = plt.xticks()[0]
@@ -102,8 +114,8 @@ def plot_data(formatted_data1, formatted_data2, formatted_data3, formatted_data4
 
     plt.show()
 
-formatted_data1=readFromUrl(urlEuribor6m)
-formatted_data2=readFromUrl(urlEcbRates)
-formatted_data3=readFromEurostatUrl(urlEuroBond, 0)
-formatted_data4=readFromEurostatUrl(urlEuroHicp, 1)
-plot_data(formatted_data1, formatted_data2, formatted_data3, formatted_data4)
+formatted_euribor=readFromUrl(urlEuribor6m)
+formatted_ecbrates=readFromUrl(urlEcbRates)
+formatted_yield=readFromEurostatUrl(urlEuroBond, 0)
+formatted_inflazione=readFromEurostatUrl(urlEuroHicp, 1)
+plot_data(formatted_euribor, formatted_ecbrates, formatted_yield, formatted_inflazione)
