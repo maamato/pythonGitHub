@@ -3,16 +3,16 @@ import requests
 from datetime import datetime
 import matplotlib.pyplot as plt
 
-urlEuroBondDaily="https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/irt_euryld_d?format=JSON&sinceTimePeriod=2019-01-01&geo=EA&maturity=Y10&yld_curv=SPOT_RT&bonds=CGB_EA&lang=en"
-urlEuroBondMonth='https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/irt_euryld_m?format=JSON&sinceTimePeriod=2019-01&geo=EA&maturity=Y10&yld_curv=SPOT_RT&bonds=CGB_EA&lang=en'
-urlEuroBondQuartely='https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/irt_euryld_q?format=JSON&sinceTimePeriod=2019-Q1&geo=EA&maturity=Y10&yld_curv=SPOT_RT&bonds=CGB_EA&lang=en'
+urlEuroBondDaily="https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/irt_euryld_d?format=JSON&sinceTimePeriod=2023-04-01&geo=EA&maturity=Y10&yld_curv=SPOT_RT&bonds=CGB_EA&lang=en"
+urlEuroBondMonth='https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/irt_euryld_m?format=JSON&sinceTimePeriod=2023-04&geo=EA&maturity=Y10&yld_curv=SPOT_RT&bonds=CGB_EA&lang=en'
+urlEuroBondQuartely='https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/irt_euryld_q?format=JSON&sinceTimePeriod=2023-Q1&geo=EA&maturity=Y10&yld_curv=SPOT_RT&bonds=CGB_EA&lang=en'
 
 
 def sostituisci_trimestri(testo):
-    testo_modificato = testo.replace('Q1', '3')
-    testo_modificato = testo_modificato.replace('Q2', '6')
-    testo_modificato = testo_modificato.replace('Q3', '9')
-    testo_modificato = testo_modificato.replace('Q4', '12')
+    testo_modificato = testo.replace('Q1', '3-15')
+    testo_modificato = testo_modificato.replace('Q2', '6-15')
+    testo_modificato = testo_modificato.replace('Q3', '9-15')
+    testo_modificato = testo_modificato.replace('Q4', '12-15')
     return testo_modificato
 
 def readFromEurostatUrl(url, hicp):
@@ -97,5 +97,5 @@ def plot_data(formatted_data1, formatted_data2, formatted_data3):
 
 formatted_data1=readFromEurostatUrl(urlEuroBondDaily, 0)
 formatted_data2=readFromEurostatUrl(urlEuroBondMonth, 1)
-formatted_data3=readFromEurostatUrl(urlEuroBondQuartely, 1)
+formatted_data3=readFromEurostatUrl(urlEuroBondQuartely, 0)
 plot_data(formatted_data1, formatted_data2, formatted_data3)
