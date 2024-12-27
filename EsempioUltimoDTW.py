@@ -118,10 +118,10 @@ SEQS_CHIUSURE = split_time_series(CHIUSURE, N)
 
 SPLIT_SEQS_CHIUSURE = split_sequences(SEQS_CHIUSURE, K) 
 
-A = [seq[0] for seq in SPLIT_SEQS]
-B = [seq[1] for seq in SPLIT_SEQS]
-#A = [seq[0]-seq[0][0] for seq in SPLIT_SEQS]
-#B = [seq[1]-seq[1][0] for seq in SPLIT_SEQS]
+#A = [seq[0] for seq in SPLIT_SEQS]
+#B = [seq[1] for seq in SPLIT_SEQS]
+A = [seq[0]-seq[0][0] for seq in SPLIT_SEQS]
+B = [seq[1]-seq[1][0] for seq in SPLIT_SEQS]
 
 A_CHIUSURE = [seq[0] for seq in SPLIT_SEQS_CHIUSURE]
 B_CHIUSURE = [seq[1] for seq in SPLIT_SEQS_CHIUSURE]
