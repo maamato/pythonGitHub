@@ -151,7 +151,7 @@ for i in range(len(A)):
 # populate G
 G = {}
 #THRESHOLD =0.09*(N/10) # arbitrary value - tweak this to get different results
-THRESHOLD =0.06*(N/10) # arbitrary value - tweak this to get different results
+THRESHOLD =0.09*(N/10) # arbitrary value - tweak this to get different results
 for i in range(len(S)):
     G[i] = []
     for j in range(len(S)):
@@ -168,7 +168,7 @@ for i in range(len(S)):
 
 
 # remove any empty groups
-G = {k: v for k, v in G.items() if len(v)>2}
+G = {k: v for k, v in G.items() if len(v)>4}
 print("Gruppi G")
 print(G)
 

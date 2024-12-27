@@ -12,14 +12,19 @@ import math
 
 
 def split_time_series(series, n):
-    """
-    Split a time series into n segments of equal size
-    """
     split_series = [series[i:i+n] for i in range(0, len(series), n)]
-    # if the last sequence is smaller than n, we discard it
-    if len(split_series[-1]) < n:
-        split_series = split_series[:-1]
-    return np.array(split_series)
+    
+    # Add series starting from the midpoint of the range
+    midpoint_series = [series[i:i+n] for i in range(n//2, len(series), n)]
+
+    # Combine the two sets of series
+    all_series = split_series + midpoint_series
+
+    # Filter out sequences shorter than n
+    valid_series = [seq for seq in all_series if len(seq) == n]
+
+    return np.array(valid_series)
+    
 
 def split_sequence(sequence, k):
     """
@@ -37,7 +42,7 @@ def split_sequences(sequences, k=0.80):
 
 # Parametri di ingresso
 valInvest = 1121268
-valInvest=1080335
+#valInvest=1080335
 #valInvest = 1181507
 symbol = ""
 today = datetime.today()
@@ -90,7 +95,7 @@ Y_max = np.max(Y)
 Y = (Y - Y_min) / (Y_max - Y_min)
 
 
-N = 14  # window size --> possiamo modificare questo parametro per sperimentare
+N = 10  # window size --> possiamo modificare questo parametro per sperimentare
 K = 0.80 # split size --> 80% dei dati è in A, 20% in B
 
 SEQS = split_time_series(Y, N) # crea sequenze di lunghezza N
@@ -131,14 +136,14 @@ def compute_dynamic_time_warping(a1, a2, chiusure_a1, chiusure_a2):
     #if chiusure_a2[-1]/chiusure_a2[0] <0.993 and chiusure_a1[-1]/chiusure_a1[0] >1:
     #    return 100
 
-    if chiusure_a1[-1]/chiusure_a1[0] >1 and chiusure_a2[-1]/chiusure_a2[0] <1:
-        return 100
-    if chiusure_a1[-1]/chiusure_a1[0] <1 and chiusure_a2[-1]/chiusure_a2[0] >1:
-        return 100
-    if chiusure_a2[-1]/chiusure_a2[0] >1 and chiusure_a1[-1]/chiusure_a1[0] <1:
-        return 100
-    if chiusure_a2[-1]/chiusure_a2[0] <1 and chiusure_a1[-1]/chiusure_a1[0] >1:
-        return 100
+    #if chiusure_a1[-1]/chiusure_a1[0] >1 and chiusure_a2[-1]/chiusure_a2[0] <1:
+    #    return 100
+    #if chiusure_a1[-1]/chiusure_a1[0] <1 and chiusure_a2[-1]/chiusure_a2[0] >1:
+    #    return 100
+    #if chiusure_a2[-1]/chiusure_a2[0] >1 and chiusure_a1[-1]/chiusure_a1[0] <1:
+    #    return 100
+    #if chiusure_a2[-1]/chiusure_a2[0] <1 and chiusure_a1[-1]/chiusure_a1[0] >1:
+    #    return 100
 
 
     for i in range(len(a1)):
@@ -162,11 +167,11 @@ for i in range(len(A)):
 # populate G
 G = {}
 #THRESHOLD =0.09*(N/10) # arbitrary value - tweak this to get different results
-THRESHOLD =0.09*(N/10) # arbitrary value - tweak this to get different results
+THRESHOLD =0.12*(N/10) # arbitrary value - tweak this to get different results
 for i in range(len(S)):
     G[i] = []
     for j in range(len(S)):
-        if S[i, j] < THRESHOLD and i != j and (i, j) not in G and (j, i) not in G and j not in G[i] and len(G[i])<5:
+        if S[i, j] < THRESHOLD and i != j and (i, j) not in G and (j, i) not in G and j not in G[i] and len(G[i])<8:
             already_added = False
             for key in G:
                 if j in G[key]:
@@ -179,7 +184,7 @@ for i in range(len(S)):
 
 
 # remove any empty groups
-G = {k: v for k, v in G.items() if len(v)>2}
+G = {k: v for k, v in G.items() if len(v)>4}
 print("Gruppi G")
 print(G)
 
@@ -234,9 +239,11 @@ def mean_squared_error(y_true, y_pred):
         for j in range(len(y_true[i])):
             error += (y_true[i][j] - y_pred[i][j]) ** 2
         if y_true[i][-1]/y_true[i][0]>1 and y_pred[i][-1]/y_pred[i][0]<1:
-                error +=0.1
+                #error +=0.1
+                error +=0.0
         if y_true[i][-1]/y_true[i][0]<1 and y_pred[i][-1]/y_pred[i][0]>1:
-                error +=0.1
+                #error +=0.1
+                error +=0.0
     return error / N
 
 # Derivata della funzione sigmoid
@@ -312,7 +319,7 @@ def train_rnn(X_train, y_train, DIM_INPUT, DIM_HIDDEN, DIM_OUTPUT, epochs=10, le
     loss=100
     epoch=0
     #for epoch in range(epochs):
-    while loss>0.001 and epoch<100:
+    while loss>0.001 and epoch<50000:
         y_pred, h = rnn_forward(X_train, W_xh, W_hh, W_hy, b_h, b_y)
         loss = mean_squared_error(y_train, y_pred)
         rnn_backward(X_train, y_train, y_pred, h, W_xh, W_hh, W_hy, b_h, b_y, learning_rate)

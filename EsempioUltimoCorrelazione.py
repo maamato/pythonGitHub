@@ -10,6 +10,7 @@ from io import StringIO
 import random
 import math
 
+
 def split_time_series(series, n):
     """
     Split a time series into segments of size n and include sequences starting
@@ -53,10 +54,11 @@ def split_sequences(sequences, k=0.80):
 
 # Parametri di ingresso
 valInvest = 1121268
+#valInvest=1080335
 #valInvest = 1181507
 symbol = ""
 today = datetime.today()
-some_months_ago = today - relativedelta(months=60)
+some_months_ago = today - relativedelta(months=200)
 period1 = some_months_ago.strftime("%m/%d/%Y")
 period2 = today.strftime("%m/%d/%Y")
 
@@ -105,48 +107,47 @@ Y_max = np.max(Y)
 Y = (Y - Y_min) / (Y_max - Y_min)
 
 
-N = 10  # window size --> possiamo modificare questo parametro per sperimentare
+N = 10 # window size --> possiamo modificare questo parametro per sperimentare
 K = 0.80 # split size --> 80% dei dati è in A, 20% in B
 
 SEQS = split_time_series(Y, N) # crea sequenze di lunghezza N
-print(SEQS)
+
 SPLIT_SEQS = split_sequences(SEQS, K) # divide le sequenze in due
 
 SEQS_CHIUSURE = split_time_series(CHIUSURE, N) 
 
 SPLIT_SEQS_CHIUSURE = split_sequences(SEQS_CHIUSURE, K) 
 
-
-A = [seq[0] for seq in SPLIT_SEQS]
-B = [seq[1] for seq in SPLIT_SEQS]
-#A = [seq[0]-seq[0][0] for seq in SPLIT_SEQS]
-#B = [seq[1]-seq[1][0] for seq in SPLIT_SEQS]
+#A = [seq[0] for seq in SPLIT_SEQS]
+#B = [seq[1] for seq in SPLIT_SEQS]
+A = [seq[0]-seq[0][0] for seq in SPLIT_SEQS]
+B = [seq[1]-seq[1][0] for seq in SPLIT_SEQS]
 
 A_CHIUSURE = [seq[0] for seq in SPLIT_SEQS_CHIUSURE]
 B_CHIUSURE = [seq[1] for seq in SPLIT_SEQS_CHIUSURE]
 
-
-
-def compute_dynamic_time_warping(a1, a2):
-    """
-    Compute the dynamic time warping between two sequences
-    """
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression
+from scipy.stats import pearsonr
+degree=3
+def compute_correlazione(a1, a2, chiusure_a1, chiusure_a2, degree):
+    # Adattiamo un polinomio di grado specificato tra a1 e a2
+    p_coeff = np.polyfit(a1, a2, degree)
     
-    DTW = {}
+    # Usiamo il polinomio trovato per stimare i valori di a2
+    p = np.poly1d(p_coeff)
+    a2_pred = p(a1)
+    
+    # Calcoliamo la correlazione di Pearson tra i valori previsti e quelli reali
+    #correlazione, _ = pearsonr(a2,a2_pred)
+    correlazione = np.corrcoef(a2, a2_pred)[0, 1]
+    
+    return correlazione
 
-    for i in range(len(a1)):
-        DTW[(i, -1)] = float('inf')
-    for i in range(len(a2)):
-        DTW[(-1, i)] = float('inf')
-    DTW[(-1, -1)] = 0
 
-    for i in range(len(a1)):
-        for j in range(len(a2)):
-            dist = (a1[i]-a2[j])**2
-            DTW[(i, j)] = dist + min(DTW[(i-1, j)], DTW[(i, j-1)], DTW[(i-1, j-1)])
-
-    return np.sqrt(DTW[len(a1)-1, len(a2)-1])
-
+def compute_correlazione(a1, a2):
+    correlazione, _ = pearsonr(a1,a2)
+    return correlazione
 
 # create empty matrix
 S = np.zeros((len(A), len(A)))
@@ -155,17 +156,17 @@ S = np.zeros((len(A), len(A)))
 for i in range(len(A)):
     for j in range(len(A)):
         # weigh the dynamic time warping with the correlation
-        S[i, j] = compute_dynamic_time_warping(A[i], A[j])
+        S[i, j] = compute_correlazione(A[i], A[j])
 
 
 # populate G
 G = {}
 #THRESHOLD =0.09*(N/10) # arbitrary value - tweak this to get different results
-THRESHOLD =0.09*(N/10) # arbitrary value - tweak this to get different results
+THRESHOLD =0.6 # arbitrary value - tweak this to get different results
 for i in range(len(S)):
     G[i] = []
     for j in range(len(S)):
-        if S[i, j] < THRESHOLD and i != j and (i, j) not in G and (j, i) not in G and j not in G[i] and len(G[i])<8:
+        if S[i, j] > abs(THRESHOLD) and i != j and (i, j) not in G and (j, i) not in G and j not in G[i] and len(G[i])<8:
             already_added = False
             for key in G:
                 if j in G[key]:
@@ -232,13 +233,10 @@ def mean_squared_error(y_true, y_pred):
     for i in range(N):
         for j in range(len(y_true[i])):
             error += (y_true[i][j] - y_pred[i][j]) ** 2
-        if y_true[i][-1]/y_true[i][0]>1 and y_pred[i][-1]/y_pred[i][0]<1:
-                error +=0.0
-                #error +=0.1
-        if y_true[i][-1]/y_true[i][0]<1 and y_pred[i][-1]/y_pred[i][0]>1:
-                error +=0.0
-                #error +=0.1
-
+        if y_true[i][-1]-y_true[i][0]>0 and y_pred[i][-1]-y_pred[i][0]<0:
+                error +=0
+        if y_true[i][-1]-y_true[i][0]<0 and y_pred[i][-1]-y_pred[i][0]>0:
+                error +=0
     return error / N
 
 # Derivata della funzione sigmoid
@@ -309,7 +307,7 @@ def rnn_backward(X, y_true, y_pred, h, W_xh, W_hh, W_hy, b_h, b_y, learning_rate
         b_y[j] -= learning_rate * db_y[j]
 
 # Addestramento della RNN
-def train_rnn(X_train, y_train, DIM_INPUT, DIM_HIDDEN, DIM_OUTPUT, epochs=10, learning_rate=0.01):
+def train_rnn(X_train, y_train, DIM_INPUT, DIM_HIDDEN, DIM_OUTPUT, epochs=10, learning_rate=0.001):
     W_xh, W_hh, W_hy, b_h, b_y = init_rnn_weights(DIM_INPUT, DIM_HIDDEN, DIM_OUTPUT)
     loss=100
     epoch=0
@@ -357,7 +355,7 @@ for k, v in G.items():
     output_dim = num_timestepsB
     
     # Addestramento della RNN
-    val_W_xh, val_W_hh, val_W_hy, val_b_h, val_b_y = train_rnn(TargetA, TargetB, input_dim, hidden_units, output_dim, epochs=200, learning_rate=0.1)
+    val_W_xh, val_W_hh, val_W_hy, val_b_h, val_b_y = train_rnn(TargetA, TargetB, input_dim, hidden_units, output_dim, epochs=200, learning_rate=0.01)
     W_xh.append(val_W_xh)
     W_hh.append(val_W_hh)
     W_hy.append(val_W_hy)
@@ -369,11 +367,11 @@ def check_sequence_belongs_to_network(sequence, sequenceTest,chiusureA, chiusure
     W_xh, W_hh, W_hy, b_h, b_y = trained_rnn_params
     output, _ = rnn_forward([sequence], W_xh, W_hh, W_hy, b_h, b_y)
     val=mean_squared_error(output,sequenceTest.reshape(1, -1))
-    if chiusureB[-1]/chiusureA[-1]<1.0005 and chiusureB[-1]/chiusureA[-1]>0.9995:
+    if chiusureB[-1]/chiusureB[0]<1.0005 and chiusureB[-1]/chiusureB[0]>0.9995:
         trend ="stabile"
-    if chiusureB[-1]/chiusureA[-1]>1.0005:
+    if chiusureB[-1]/chiusureB[0]>1.0005:
         trend ="salita"
-    if chiusureB[-1]/chiusureA[-1]<0.9995:
+    if chiusureB[-1]/chiusureB[0]<0.9995:
         trend ="discesa"
 
     return val,trend
@@ -435,7 +433,7 @@ def classify_trend(a, b, threshold=0.05):
     Classify the trend of a vector
     """
     # compute slope
-    slope = np.mean((b[-1]-a[-1]) / (np.diff(np.arange(len(b)))+1))
+    slope = np.mean((b[-1]-b[0]) / (np.diff(np.arange(len(b)))))
     # if slope is positive, the trend is upward
     if slope + (slope * threshold) > 0:
         return 1
@@ -454,25 +452,7 @@ trends = [classify_trend(A[i],B[i]) for i in flattened_G]
 PROBABILITIES = {}
 RNN={}
 
-#for k, v in G.items():
-#    total = len(v)
-#    seq_trends = [classify_trend(A[seq],B[seq]) for seq in v]
-#    prob_up = len([t for t in seq_trends if t == 1]) / total
-#    prob_down = len([t for t in seq_trends if t == -1]) / total
-#    prob_stable = len([t for t in seq_trends if t == 0]) / total
-#    min_out=100
-#    trendfix=""
-#    item=-1
-#    for seq in v:
-#        for key, value in RNNItems.items():
-#            out,trend=check_sequence_belongs_to_network(A[seq],B[seq], A_CHIUSURE[seq], B_CHIUSURE[seq],RNNItems[key])
-#            if out<min_out:
-#                min_out=out
-#                item=key
-#                trendfix=trend
-#    PROBABILITIES[k] = {'up': prob_up, 'down': prob_down, 'stable': prob_stable, 'RNN': item, "Trend":trendfix}
-                
-       
+
 
 
 for k, v in G.items():
@@ -535,23 +515,23 @@ dtw_results = {}
 
 # Calcolare i risultati della funzione per ciascuna chiave in G.keys()
 for k in G.keys():
-    dtw_value = compute_dynamic_time_warping(ULTIMASEQ, A[k])
+    dtw_value = compute_correlazione(ULTIMASEQ, A[k])
     dtw_results[k] = dtw_value
     out,trend=check_sequence_belongs_to_network(A[k],B[k], A_CHIUSURE[k], B_CHIUSURE[k],RNNItems[k])
 
 # Ordinare il dizionario per valore (in ordine crescente)
-sorted_dtw_results = dict(sorted(dtw_results.items(), key=lambda item: item[1]))
+sorted_dtw_results = dict(sorted(dtw_results.items(), key=lambda item: abs(item[1]),reverse=True))
 
 def check_sequence_RNN(sequence, trained_rnn_params):
     W_xh, W_hh, W_hy, b_h, b_y = trained_rnn_params
     output, _ = rnn_forward([sequence], W_xh, W_hh, W_hy, b_h, b_y)
     flat_list = sum(output, [])
-    if flat_list[-1]/flat_list[0]<1.0005 and flat_list[-1]/flat_list[0]>0.9995:
-        trend ="stabile"
-    if flat_list[-1]/flat_list[0]>1.0005:
+    trend ="stabile"
+    if flat_list[-1]/flat_list[0]>1:
         trend ="salita"
-    if flat_list[-1]/flat_list[0]<0.9995:
+    if flat_list[-1]/flat_list[0]<1:
         trend ="discesa"
+    
 
     return output,trend
     
