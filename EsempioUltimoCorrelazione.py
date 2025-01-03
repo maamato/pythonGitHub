@@ -118,10 +118,10 @@ SEQS_CHIUSURE = split_time_series(CHIUSURE, N)
 
 SPLIT_SEQS_CHIUSURE = split_sequences(SEQS_CHIUSURE, K) 
 
-#A = [seq[0] for seq in SPLIT_SEQS]
-#B = [seq[1] for seq in SPLIT_SEQS]
-A = [seq[0]-seq[0][0] for seq in SPLIT_SEQS]
-B = [seq[1]-seq[1][0] for seq in SPLIT_SEQS]
+A = [seq[0] for seq in SPLIT_SEQS]
+B = [seq[1] for seq in SPLIT_SEQS]
+#A = [seq[0]-seq[0][0] for seq in SPLIT_SEQS]
+#B = [seq[1]-seq[1][0] for seq in SPLIT_SEQS]
 
 A_CHIUSURE = [seq[0] for seq in SPLIT_SEQS_CHIUSURE]
 B_CHIUSURE = [seq[1] for seq in SPLIT_SEQS_CHIUSURE]
@@ -130,7 +130,7 @@ from sklearn.preprocessing import PolynomialFeatures
 from sklearn.linear_model import LinearRegression
 from scipy.stats import pearsonr
 degree=3
-def compute_correlazione(a1, a2, chiusure_a1, chiusure_a2, degree):
+def compute_correlazione_grado(a1, a2, degree):
     # Adattiamo un polinomio di grado specificato tra a1 e a2
     p_coeff = np.polyfit(a1, a2, degree)
     
@@ -355,7 +355,7 @@ for k, v in G.items():
     output_dim = num_timestepsB
     
     # Addestramento della RNN
-    val_W_xh, val_W_hh, val_W_hy, val_b_h, val_b_y = train_rnn(TargetA, TargetB, input_dim, hidden_units, output_dim, epochs=200, learning_rate=0.01)
+    val_W_xh, val_W_hh, val_W_hy, val_b_h, val_b_y = train_rnn(TargetA, TargetB, input_dim, hidden_units, output_dim, epochs=200, learning_rate=0.1)
     W_xh.append(val_W_xh)
     W_hh.append(val_W_hh)
     W_hy.append(val_W_hy)
@@ -520,7 +520,7 @@ for k in G.keys():
     out,trend=check_sequence_belongs_to_network(A[k],B[k], A_CHIUSURE[k], B_CHIUSURE[k],RNNItems[k])
 
 # Ordinare il dizionario per valore (in ordine crescente)
-sorted_dtw_results = dict(sorted(dtw_results.items(), key=lambda item: abs(item[1]),reverse=True))
+sorted_dtw_results = dict(sorted(dtw_results.items(), key=lambda item: (item[1]),reverse=True))
 
 def check_sequence_RNN(sequence, trained_rnn_params):
     W_xh, W_hh, W_hy, b_h, b_y = trained_rnn_params
